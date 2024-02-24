@@ -9,6 +9,8 @@ const GPTComponent = () => {
   };
 
   const handleGenerateClick = async () => {
+    //just create a text output saying "Hello World"
+    setOutputText("NICE MAN");
     try {
       const response = await fetch('https://api.openai.com/v1/gpt', {
         method: 'POST',
@@ -22,9 +24,13 @@ const GPTComponent = () => {
         }),
       });
 
+      
+
       const result = await response.json();
       setOutputText(result.data); // Assuming the API response has a 'data' field
     } catch (error) {
+      //print the whole error object to the console:
+      setOutputText(error.toString());
       console.error('Error fetching GPT API:', error);
     }
   };
