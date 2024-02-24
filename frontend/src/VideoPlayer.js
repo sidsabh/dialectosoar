@@ -2,17 +2,25 @@ import React from 'react';
 import ReactPlayer from 'react-player/youtube'; // Import specifically for YouTube videos
 import { useState, useEffect } from 'react';
 
-const url = 'http://localho.st:3001/video-data';
+const url = 'http://localho.st:3001';
+
+const states = {
+    PLAYING: 'PLAYING',
+    PAUSED: 'PAUSED',
+    STOPPED: 'STOPPED',
+};
 
 const VideoPlayer = ({ videoUrl }) => {
     const [subtitles, setSubtitles] = useState([]);
     const videoID = videoUrl.split('v=')[1];
+    const [seconds, setSeconds] = useState(0);
+
 
     useEffect(() => {
         const fetchSubtitles = async () => {
             try {
                 const response = await fetch(
-                    `${url}?videoID=${videoID}&lang=en`
+                    `${url}/video-data?videoID=${videoID}&lang=en`
                     );
                 const data = await response.json();
                 setSubtitles(data.subtitles);
@@ -21,12 +29,12 @@ const VideoPlayer = ({ videoUrl }) => {
             }
         }
         fetchSubtitles();
-    }, [videoID]);
-
+    }, [subtitles, videoID]);
 
     useEffect(() => {
-        console.log('subtitles:', subtitles);
-    }, [subtitles]);
+        // IMPLEMENT STATE MACHINE
+    }, [seconds]);
+
 
     return (
         <>
@@ -35,6 +43,9 @@ const VideoPlayer = ({ videoUrl }) => {
                     className='react-player'
                     url={videoUrl}
                     controls={true} // Show video controls
+                    onProgress={(state) => {
+                        setSeconds(state.playedSeconds);
+                    } }
                 />
             </div>
         </>

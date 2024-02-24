@@ -52,7 +52,7 @@ const YTLang = () => {
                 onClick={() => setSubmitted(true)}
                 disabled={!videoUrl || !sourceLanguage || !targetLanguage}
             >
-                Translate
+                Learn
             </button>
             <div className="w-full h-full">
                 {submitted && (
