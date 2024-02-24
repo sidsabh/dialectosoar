@@ -1,47 +1,28 @@
 import React from 'react';
 import ReactPlayer from 'react-player/youtube'; // Import specifically for YouTube videos
 import { useState, useEffect } from 'react';
-import { getSubtitles, getVideoDetails } from 'youtube-caption-extractor';
 
+const url = 'http://localho.st:3001/video-data';
 
 const VideoPlayer = ({ videoUrl }) => {
     const [subtitles, setSubtitles] = useState([]);
     const videoID = videoUrl.split('v=')[1];
 
-
-    // Fetching Subtitles
-    const fetchSubtitles = async (videoID, lang = 'en') => {
-        try {
-            const subtitles = await getSubtitles({ videoID, lang });
-            console.log(subtitles);
-            setSubtitles(subtitles);
-        } catch (error) {
-            console.error('Error fetching subtitles:', error);
-        }
-    };
-
-    // Fetching Video Details
-    const fetchVideoDetails = async (videoID, lang = 'en') => {
-    try {
-        const videoDetails = await getVideoDetails({ videoID, lang });
-        console.log(videoDetails);
-    } catch (error) {
-        console.error('Error fetching video details:', error);
-    }
-    };
-
-    const lang = 'en'; // Optional, default is 'en' (English)
-
-    // fetchSubtitles(videoID, lang);
-    // fetchVideoDetails(videoID, lang);
-
     useEffect(() => {
-        async function fetchData() {
-            await fetchSubtitles(videoID, lang);
-            await fetchVideoDetails(videoID, lang);
+        const fetchSubtitles = async () => {
+            try {
+                const response = await fetch(
+                    `${url}?videoID=${videoID}&lang=en`
+                    );
+                const data = await response.json();
+                setSubtitles(data.subtitles);
+            } catch (error) {
+                console.error('Error fetching video data:', error);
+            }
         }
-        fetchData();
-    }, [videoID, lang]);
+        fetchSubtitles();
+    }, [videoID]);
+
 
     useEffect(() => {
         console.log('subtitles:', subtitles);
