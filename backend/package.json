@@ -2,6 +2,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "openai": "^4.28.0",
     "youtube-caption-extractor": "^1.4.3"
   },
   "scripts": {
