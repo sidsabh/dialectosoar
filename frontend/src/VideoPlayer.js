@@ -145,7 +145,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
             <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
                 <div className="text-green-600">Correct: {statistic.numCorrect}</div>
                 <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
-                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
+                <div className="text-black-600">Skipped: {statistic.numSkipped}</div>
             </div>
             <div
                 className={`w-1/2 mx-auto ${state === states.PLAYING ? 'invisible' : 'visible'}`}>
