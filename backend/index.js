@@ -1,17 +1,24 @@
 // server/index.js
-const yce = require('youtube-caption-extractor');
-const express = require("express");
+// const yce = require('youtube-caption-extractor');
+import yce from 'youtube-caption-extractor';
+
+// const express = require("express");
+import express from 'express';
+
 const PORT = process.env.PORT || 3001;
 const app = express();
-const cors = require("cors");
-require('dotenv').config()
+// const cors = require("cors");
+import cors from 'cors';
+// require('dotenv').config()
+import dotenv from 'dotenv';
+dotenv.config();
 
 
 
-const { OpenAI } = require('openai');
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env['OPENAI_API_KEY'], // This is the default and can be omitted
 });
 
 
@@ -37,30 +44,38 @@ app.post('/generate-question', async (req, res) => {
     // Destructure the data from req.body instead of req.query
     const { title, description, subtitles, targetLanguage, sourceLanguage } = req.body;
     
-    const prompt = `Create a multiple choice question for comprehension in ${targetLanguage} about this ${sourceLanguage} video titled ${title} with description ${description}. Label your lines as follows. "QUESTION: <question>", "ANSWER_CHOICE_<LETTER>": <answer_choice>", and "CORRECT_ANSWER": <correct_answer>. Here are the subtitles for the video:\n\n${subtitles}. Make the question and answer choices as natural as possible on the last line of the subtitles.`;
+    const prompt = `Create a multiple choice question for comprehension in ${targetLanguage} about this ${sourceLanguage} video titled ${title} with description ${description}. Label your lines as follows. "QUESTION: <question>", "ANSWER_CHOICE_<LETTER>": <answer_choice>", and "CORRECT_ANSWER": <correct_answer_letter>. Here are the subtitles for the video:\n\n${subtitles}. Make the question and answer choices as natural as possible on the last line of the subtitles.`;
 
-    const response = await openai.complete({
-      model: "gpt-3.5-turbo-16k-0613",
-      messages: [
-        {
-          role: "system",
-          content: prompt,
-        },
-      ],
+    const response = await openai.chat.completions.create({
+      messages: [{ role: 'system', content: prompt }],
+      model: 'gpt-3.5-turbo',
+      max_tokens: 500,
+      temperature: 0.7,
     });
-    
-    console.log(response);
+
+    // // Assuming the response structure matches the SDK's expected format
+    const output = response.choices[0].message.content.trim();
+    const questionMatch = output.match(/QUESTION: (.*)/);
+    const answerChoicesMatches = output.match(/ANSWER_CHOICE_[A-D]: (.*)/g);
+    const correctAnswerMatch = output.match(/CORRECT_ANSWER: (.*)/);
+
+    if (!questionMatch || !answerChoicesMatches || !correctAnswerMatch) {
+      throw new Error("Failed to parse the output.");
+    }
+
+    const question = questionMatch[1];
+    const answers = answerChoicesMatches.map((match) => match.split(': ')[1]);
+    const correctAnswer = correctAnswerMatch[1];
+    const correctAnswerIndex = correctAnswer.charCodeAt(0) - 65;
+
+    let answer = {
+      "question": question || "What is the capital of France?",
+      "answers": answers || ['Paris', 'London', 'New York', 'Berlin'],
+      "correctAnswerIndex": correctAnswerIndex || 0
+    };
 
 
-    // Extract the question and answer choices from the response
-    const output = response.data.choices[0].text.trim();
-    const question = output.match(/QUESTION: (.*)/)[1];
-    const answerChoices = output.match(/ANSWER_CHOICE_[A-D]: (.*)/g).map((match) => match.split(': ')[1]);
-    const correctAnswerIndex = answerChoices.findIndex((choice) => choice === output.match(/CORRECT_ANSWER: (.*)/)[1]);
-
-    res.status(200).json({ question, answerChoices, correctAnswerIndex });
-
-    // res.status(200).json({ question: 'What is the capital of France?', answers: ['Paris', 'London', 'New York', 'Berlin'], correctAnswerIndex: 0 });
+    res.status(200).json(answer);
 
   }catch (error) {
     if (error.response) {

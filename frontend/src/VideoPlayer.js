@@ -97,7 +97,6 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                     targetLanguage: codeToFull[targetLanguage],
                     sourceLanguage: codeToFull[sourceLanguage],
                   });
-                console.log({the_body});
                 const response = await fetch(`${url}/generate-question`, {
                     method: 'POST',
                     headers: {
@@ -110,7 +109,6 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                   }
                 const data = await response.json();
                 setGeneration(data);
-
             } catch (error) {
                 console.error('ERROR:', error);
             }
@@ -125,7 +123,6 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 break;
             }
         }
-        console.log(runningSubtitles.current.length);
         if (roundedSeconds >= pauseTimeRef.current && runningSubtitles.current.length > 200) {
             pauseTimeRef.current += config.questionDelay;
             setState(states.PAUSED);
@@ -133,11 +130,6 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         }
 
     }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, runningSubtitles]);
-
-    useEffect(() => {
-        console.log(videoDetails);
-    }, [videoDetails]);
-
 
     return (
         <div className="pt-24 space-y-4">
