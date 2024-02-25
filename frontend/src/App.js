@@ -46,7 +46,7 @@ const App = () => {
                     </div>
                     
                     <div className="third" style={{ flex: 1, marginLeft: '10px', color: '#C0C0C0', fontSize: '20px', font: 'RussoOne', alignItems: 'self-end' }}>
-                            Dark Mode?
+                            Dark Mode: On
                     </div>
                     <div className="third" style = {{flex: 1, alignItems: 'self-start', marginLeft: '10px'}}>
                         <Toggle setClassName={setClassName}/>
@@ -125,7 +125,7 @@ const App = () => {
                     </div>
                     
                     <div className="third" style={{ flex: 1, marginLeft: '10px', color: '#E0E0E0', fontSize: '20px', font: 'RussoOne', alignItems: 'self-end' }}>
-                            Dark Mode?
+                            Dark Mode: Off
                     </div>
                     <div className="third" style = {{flex: 1, alignItems: 'self-start', marginLeft: '10px'}}>
                         <Toggle setClassName={setClassName}/>
