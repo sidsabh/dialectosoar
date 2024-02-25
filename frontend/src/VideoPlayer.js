@@ -66,7 +66,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
     const pauseTimeRef = useRef(config.questionDelay);
 
-    let runningSubtitles = useRef([]);
+    let runningSubtitles = useRef("");
 
 
     // fetch subtitles
@@ -74,7 +74,8 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         const fetchSubtitles = async () => {
             try {
                 const response = await fetch(
-                    `${url}/video-data?videoID=${videoUrl.split('v=')[1]}&lang=${sourceLanguage}`
+                    // `${url}/video-data?videoID=${videoUrl.split('v=')[1]}&lang=${sourceLanguage}`
+                    `${url}/video-data?videoID=${videoUrl.split('v=')[1]}`
                     );
                 const data = await response.json();
                 setVideoDetails(data.videoDetails);
@@ -89,25 +90,27 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     useEffect(() => {
         const getQuestion = async () => {
             try {
+                const the_body = JSON.stringify({
+                    title: videoDetails.title,
+                    description: videoDetails.description,
+                    subtitles: runningSubtitles.current,
+                    targetLanguage: codeToFull[targetLanguage],
+                    sourceLanguage: codeToFull[sourceLanguage],
+                  });
+                console.log({the_body});
                 const response = await fetch(`${url}/generate-question`, {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                      title: videoDetails.title,
-                      description: videoDetails.description,
-                      subtitles: runningSubtitles.current.join(' '),
-                      targetLanguage,
-                      sourceLanguage,
-                    }),
+                    body: the_body,
                   });
                   if (!response.ok) {
                     throw new Error('Network response was not ok');
                   }
                 const data = await response.json();
                 setGeneration(data);
-                
+
             } catch (error) {
                 console.error('ERROR:', error);
             }
@@ -117,12 +120,13 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         runningSubtitles.current = [];
         for (let i = 0; i < videoDetails.subtitles?.length; i++) {
             if (seconds > parseFloat(videoDetails.subtitles[i].start) + parseFloat(videoDetails.subtitles[i].dur)) {
-                runningSubtitles.current.push(videoDetails.subtitles[i].text);
+                runningSubtitles.current += videoDetails.subtitles[i].text;
             } else {
                 break;
             }
         }
-        if (roundedSeconds >= pauseTimeRef.current) {
+        console.log(runningSubtitles.current.length);
+        if (roundedSeconds >= pauseTimeRef.current && runningSubtitles.current.length > 200) {
             pauseTimeRef.current += config.questionDelay;
             setState(states.PAUSED);
             getQuestion();
