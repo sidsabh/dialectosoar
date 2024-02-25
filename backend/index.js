@@ -5,6 +5,7 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 const cors = require("cors");
 app.use(cors());
+app.use(express.json());
 
 //lets now do something for open ai api:
 const axios = require('axios');
@@ -23,13 +24,15 @@ app.get("/video-data", async (req, res) => {
 });
 
 
-app.get('/generate-question', async (req, res) => {
+
+app.post('/generate-question', async (req, res) => {
   try {
-    const title = req.body.title;
-    const description = req.body.description;
-    const subtitles = req.body.subtitles;
-    const targetLanguage = req.body.targetLanguage;
-    const sourceLanguage = req.body.sourceLanguage;
+    // const title = req.body.title;
+    // const description = req.body.description;
+    // const subtitles = req.body.subtitles;
+    // const targetLanguage = req.body.targetLanguage;
+    // const sourceLanguage = req.body.sourceLanguage;
+    const { title, description, subtitles, targetLanguage, sourceLanguage } = req.query;
     
     // PROMPT
     const prompt = `Create a multiple choice question for comprehension in ${targetLanguage} about this ${sourceLanguage} video titled ${title} with description ${description}. Label your lines as follows. "QUESTION: <question>", "ANSWER_CHOICE": <answer_choice>", and "CORRECT_ANSWER": <correct_answer>. For example, if you had one question and four answer choices, you would print those five lines then one more line for the correct answer. Here is 
@@ -43,7 +46,7 @@ app.get('/generate-question', async (req, res) => {
     console.log('sourceLanguage:', sourceLanguage);
     console.log('prompt:', prompt);
 
-    // return 200
+    // // return 200
     res.status(200).json({ question: 'What is the capital of France?', answers: ['Paris', 'London', 'New York', 'Berlin'], correctAnswerIndex: 0 });
 
   } catch (error) {

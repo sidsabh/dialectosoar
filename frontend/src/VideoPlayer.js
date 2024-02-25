@@ -3,6 +3,13 @@ import ReactPlayer from 'react-player/youtube';
 import { useState, useEffect, useRef } from 'react';
 
 
+const codeToFull = {
+    en: 'English',
+    es: 'Spanish',
+    hi: 'Hindi',
+}
+
+
 // const
 const url = 'http://localho.st:3001';
 const states = {
@@ -67,18 +74,8 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         const fetchSubtitles = async () => {
             try {
                 const response = await fetch(
-                    `${url}/video-data`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        params: {
-                            videoID: videoUrl.split('v=')[1],
-                            lang: sourceLanguage
-                        }
-                    }
-                );
+                    `${url}/video-data?videoID=${videoUrl.split('v=')[1]}&lang=${sourceLanguage}`
+                    );
                 const data = await response.json();
                 setVideoDetails(data.videoDetails);
             } catch (error) {
@@ -92,32 +89,25 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     useEffect(() => {
         const getQuestion = async () => {
             try {
-                
-                const response = await fetch(
-                    `${url}/generate-question`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        params: {
-                            title: videoDetails.title,
-                            description: videoDetails.description,
-                            subtitles: runningSubtitles.current.join('\n'),
-                            targetLanguage,
-                            sourceLanguage
-                        }
-                    }
-                );
-                // const response = fakeGenerateQuestion();
+                const response = await fetch(`${url}/generate-question`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      title: videoDetails.title,
+                      description: videoDetails.description,
+                      subtitles: runningSubtitles.current.join(' '),
+                      targetLanguage,
+                      sourceLanguage,
+                    }),
+                  });
+                  if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                  }
                 const data = await response.json();
-                setGeneration(
-                    {
-                        question: data.question,
-                        answers: data.answers,
-                        correctAnswerIndex: data.correctAnswerIndex
-                    }
-                );
+                setGeneration(data);
+                
             } catch (error) {
                 console.error('ERROR:', error);
             }
