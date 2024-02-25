@@ -106,6 +106,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                     // `${url}/video-data?videoID=${videoUrl.split('v=')[1]}&lang=${sourceLanguage}`
                     `${url}/video-data?videoID=${videoUrl.split('v=')[1]}`
                     );
+                console.log(`${url}/video-data?videoID=${videoUrl.split('v=')[1]}`);
                 const data = await response.json();
                 setVideoDetails(data.videoDetails);
                 allSubtitles.current = data.videoDetails.subtitles?.map(sub => sub.text).join(' ');
