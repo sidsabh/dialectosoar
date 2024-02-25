@@ -22,6 +22,8 @@ const db = getFirestore(app);
 
 
 
+
+
 const codeToFull = {
     en: 'English',
     es: 'Spanish',
@@ -67,6 +69,12 @@ const configuration = {
     percentMCQ: 0.5
 }
 
+const VocabData = {
+    data: []
+}
+
+
+
 const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
     // parent
@@ -91,6 +99,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     let currSubtitles = useRef("");
     let startTime = useRef(0);
     let allSubtitles = useRef("");
+    const [vocabDataDone, setVocabDataDone] = useState(false); // Use state for vocabDataDone
 
 
     // fetch subtitles
@@ -134,18 +143,19 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 throw new Error('Network response was not ok');
               }
             const data = await response.json();
+            console.log(data);
+            VocabData.data.push(data);
             addDoc(collection(db, "vocab"), data);
         } catch (error) {
             console.error('ERROR:', error);
         }
-        //get extract vocab
         }
-        //if stopped, then getSet
 
-        // `console.log(state);`
-        // if (state === states.STOPPED) {
-        //     getSet();
-        // }
+        if(seconds > 0 && !vocabDataDone)
+        {
+            // setVocabDataDone(true);
+            getSet();
+        }
     }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, currSubtitles]);
 
     useEffect(() => {
@@ -228,9 +238,44 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
     return (
         <div className="pt-24 space-y-4">
+            {(state !== states.STOPPED )
+            ?
+            <div>
             <div className="w-full flex justify-center items-center">
+                <ReactPlayer
+                        className="react-player"
+                        url={videoUrl}
+                        controls={true}
+                        onProgress={(s) => setSeconds(s.playedSeconds)}
+                        playing={state === states.PLAYING}
+                        onEnded={() => setState(states.STOPPED)}
+                        onDuration={(duration) => duration && setDuration(duration)}
+                />
+            </div>
+            <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
+                <div className="text-green-600">Correct: {statistic.numCorrect}</div>
+                <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
+                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
+            </div>
+            </div>
+            :
+            <div>
+            <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
+                <div className="text-green-600">Correct: {statistic.numCorrect}</div>
+                <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
+                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
+            </div>
+            <Dictionary />
+            </div>
+
+            }
+
+
+
+
+            {/* <div className="w-full flex justify-center items-center">
                 {
-                (state !== states.STOPPED   )
+                (state !== states.STOPPED )
                 ?
                 <ReactPlayer
                     className="react-player"
@@ -243,13 +288,14 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 />
                 :
                 <Dictionary />
+                
                 }
             </div>
             <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
                 <div className="text-green-600">Correct: {statistic.numCorrect}</div>
                 <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
-                <div className="text-black-600">Skipped: {statistic.numSkipped}</div>
-            </div>
+                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
+            </div> */}
             <div className={`w-1/2 mx-auto ${(state === states.MCQ || state === states.WRITING) ? 'visible' : 'invisible'}`}>
                 {
                     state === states.MCQ ? 
@@ -268,14 +314,41 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 };
 
 const Dictionary = () => {
-    
-
-
+    console.log(VocabData.data);
+    //given vocabdata.data, display it visually in a table choose like 10 word definition pairs to display:
     return (
-        <div className="w-full h-96 flex justify-center items-center bg-gray-50 rounded-lg shadow-lg p-6 space-y-4">
-            <div className="text-xl font-bold text-gray-800">You have finished the video. Your vocabulary words and their meanings have been extracted and stored in the database.</div>
+        <div className="w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4">
+            <div className="text-2xl font-bold text-gray-800 mb-4">Vocabulary
+            style={{ background: localStorage.getItem('theme') === 'theme-dark' ? '#808080' : '#C0C0C0', color: localStorage.getItem('theme') === 'theme-dark' ? 'black' : 'white' }}
+            </div>
+            <table className="w-full">
+                <thead>
+                    <tr>
+                        <th className="text-left">Word</th>
+                        <th className="text-left">Definition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        
+                        VocabData.data.
+                             map((vocab, index) => (
+                            Object.keys(vocab).map((word, index) => (
+
+                                <tr key={index}>
+                                    <td>{word}</td>
+                                    <td>{vocab[word]}</td>
+                                </tr>
+                            ))
+                        ))
+                            
+                        
+                    }
+                </tbody>
+            </table>
         </div>
     );
+
 };
 
 

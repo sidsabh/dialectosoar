@@ -15,8 +15,19 @@ const App = () => {
     const [className, setClassName] = useState('theme-dark');
 
     useEffect(() => {
-        if (submitted) {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+        // scroll to the top of the youtube player
+        const player = document.getElementById('player');
+        if (player) {
+            // player.scrollIntoView({ behavior: 'smooth' });
+            // player.scrollIntoView({ block: 'start', behavior: 'smooth' });
+
+            // scroll so player is at the top of the page
+            const rect = player.getBoundingClientRect();
+            const offset = window.pageYOffset;
+            const top = rect.top + offset;
+            window.scrollTo({ top, behavior: 'smooth' });
+            
         }
     }, [submitted]);
 
@@ -53,7 +64,7 @@ const App = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto"
+                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto mt-5"
                     style = {{ background: "#747579"}}>
                     <input
                         type="text"
@@ -132,7 +143,7 @@ const App = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto"
+                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto  mt-5"
                     style = {{ background: "#8DB057"}}>
                     <input
                         type="text"
@@ -179,7 +190,7 @@ const App = () => {
                     </button>
                 </div>
                 {submitted && (
-                    <div className="w-full">
+                     <div className="w-full" id="player">
                         <VideoPlayer
                             videoUrl={videoUrl}
                             sourceLanguage={sourceLanguage}
