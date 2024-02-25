@@ -34,7 +34,7 @@ const App = () => {
                     <div className="third" style = {{background: '#8F683F', flex: 1}}/>
                 </div>
 
-                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto"
+                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto mt-5"
                     style = {{ background: "#B6AEA7"}}>
                     <input
                         type="text"

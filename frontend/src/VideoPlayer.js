@@ -2,19 +2,32 @@ import React from 'react';
 import ReactPlayer from 'react-player/youtube';
 import { useState, useEffect, useRef } from 'react';
 
-
 const codeToFull = {
     en: 'English',
     es: 'Spanish',
     hi: 'Hindi',
-}
+    zh: 'Mandarin Chinese',
+    fr: 'French',
+    ar: 'Arabic',
+    bn: 'Bengali',
+    ru: 'Russian',
+    pt: 'Portuguese',
+    id: 'Indonesian',
+    ur: 'Urdu',
+    de: 'German',
+    ja: 'Japanese',
+    sw: 'Swahili',
+    it: 'Italian',
+    pa: 'Punjabi',
+};
 
 
 // const
 const url = 'http://localho.st:3001';
 const states = {
     PLAYING: 'PLAYING',
-    PAUSED: 'PAUSED',
+    MCQ: 'MCQ',
+    WRITING: 'WRITING',
     STOPPED: 'STOPPED'
 };
 const generated = {
@@ -29,21 +42,9 @@ const statistics = {
 };
 
 const configuration = {
-    questionDelay: 10,
-    numQuestions: 5,
-    charsPerQuestion: 200
-}
-
-const fakeGenerateQuestion = () => {
-    return {
-        json: () => {
-            return {
-                question: "What is the capital of France?",
-                answers: ["Paris", "London", "Berlin", "Madrid"],
-                correctAnswerIndex: 0
-            };
-        }
-    };
+    secondsPerQuestion: 10,
+    charsPerQuestion: 200,
+    percentMCQ: 0.5
 }
 
 const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
@@ -54,6 +55,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
     // state
     const [state, setState] = useState(states.PLAYING);
+    const [duration, setDuration] = useState(Infinity);
 
     // question
     const [generation, setGeneration] = useState(generated);
@@ -64,9 +66,11 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     // user
     const [config, setConfig] = useState(configuration);
 
-    const pauseTimeRef = useRef(config.questionDelay);
+    const pauseTimeRef = useRef(config.secondsPerQuestion);
 
-    let runningSubtitles = useRef("");
+    let currSubtitles = useRef("");
+    let startTime = useRef(0);
+    let allSubtitles = useRef("");
 
 
     // fetch subtitles
@@ -79,6 +83,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                     );
                 const data = await response.json();
                 setVideoDetails(data.videoDetails);
+                allSubtitles.current = data.videoDetails.subtitles?.map(sub => sub.text).join(' ');
             } catch (error) {
                 console.error('ERROR:', error);
             }
@@ -88,6 +93,8 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
 
     useEffect(() => {
+
+
         const getQuestion = async () => {
             try {
                 const response = await fetch(`${url}/generate-question`, {
@@ -98,7 +105,8 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                     body: JSON.stringify({
                         title: videoDetails.title,
                         description: videoDetails.description,
-                        subtitles: runningSubtitles.current,
+                        // allSubtitles: allSubtitles.current,
+                        currSubtitles: currSubtitles.current,
                         targetLanguage: codeToFull[targetLanguage],
                         sourceLanguage: codeToFull[sourceLanguage],
                       }),
@@ -113,26 +121,54 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
             }
         }
 
-        const roundedSeconds = Math.round(seconds);
-        runningSubtitles.current = [];
-        for (let i = 0; i < videoDetails.subtitles?.length; i++) {
-            if (seconds > parseFloat(videoDetails.subtitles[i].start) + parseFloat(videoDetails.subtitles[i].dur)) {
-                runningSubtitles.current += videoDetails.subtitles[i].text;
-            } else {
-                break;
-            }
-        }
-        if (roundedSeconds >= pauseTimeRef.current && runningSubtitles.current.length > 200) {
-            pauseTimeRef.current = roundedSeconds + config.questionDelay;
-            setState(states.PAUSED);
-            getQuestion();
+        const roundedSeconds = Math.floor(seconds);
+
+        if (roundedSeconds >= duration) {
+            setState(states.STOPPED);
+            return;
         }
 
-    }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, runningSubtitles]);
+        for (let i = 0; i < videoDetails.subtitles?.length; i++) {
+            
+            let dur = parseFloat(videoDetails.subtitles[i].dur);
+            let start = parseFloat(videoDetails.subtitles[i].start);
+            
+            // add subtitles to currSubtitles for part in (startTime, roundedSeconds)
+            if (start + dur < startTime.current) {
+                continue;
+            }
+
+            if (start > roundedSeconds) {
+                break;
+            }
+
+            if (start <= roundedSeconds && start + dur >= roundedSeconds) {
+                currSubtitles.current += videoDetails.subtitles[i].text + " ";
+            }
+            
+        }
+
+
+        if (roundedSeconds >= pauseTimeRef.current && currSubtitles.current.length > 50) {
+            pauseTimeRef.current = roundedSeconds + config.secondsPerQuestion;
+            
+            if (Math.random() < percentMCQ) {
+                setState(states.MCQ);
+                getQuestion();
+            } else {
+                setState(states.WRITING);
+                
+            }
+            
+            startTime.current = roundedSeconds;
+            currSubtitles.current = "";
+        }
+
+    }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, currSubtitles]);
+
 
     return (
         <div className="pt-24 space-y-4">
-
             <div className="w-full flex justify-center items-center">
                 <ReactPlayer
                     className="react-player"
@@ -140,6 +176,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                     controls={true}
                     onProgress={(s) => setSeconds(s.playedSeconds)}
                     playing={state === states.PLAYING}
+                    onDuration={(duration) => duration && setDuration(duration)}
                 />
             </div>
             <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
@@ -147,16 +184,109 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
                 <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
             </div>
-            <div
-                className={`w-1/2 mx-auto ${state === states.PLAYING ? 'invisible' : 'visible'}`}>
-                <GeneratedQuestion {...{generation, statistic, setStatistic, setState, setGeneration}}/>
+            <div className={`w-1/2 mx-auto ${(state === states.MCQ || state === states.WRITING) ? 'visible' : 'invisible'}`}>
+                {
+                    state === states.MCQ ? 
+                    <GeneratedQuestion {...{generation, statistic, setStatistic, setState, setGeneration}}/> :
+                    state === states.WRITING ? 
+                    <GeneratedWriting {...{generation, statistic, setStatistic, setState, setGeneration, targetLanguage, sourceLanguage, currSubtitles}}/> :
+                    <div className="w-full h-96"></div>
+                }
             </div>
+
                 
         </div>
     );
     
     
 };
+
+const GeneratedWriting = (props) => {
+    const { statistic, setStatistic, setState } = props;
+    const { numCorrect, numIncorrect, numSkipped } = statistic;
+
+    const { currSubtitles, targetLanguage, sourceLanguage } = props;
+
+    const [submitted, setSubmitted] = useState(false);
+    const [answer, setAnswer] = useState('');
+    
+
+    const handleAnswer = (event) => {
+        setAnswer(event.target.value);
+    };
+
+    const handleSubmit = () => {
+        setSubmitted(true);
+        const checkAnswer = async () => {
+            try {
+                const response = await fetch(`${url}/check-writing`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        currSubtitles: currSubtitles.current,
+                        writtenSubtitles: answer,
+                        targetLanguage: codeToFull[targetLanguage],
+                        sourceLanguage: codeToFull[sourceLanguage],
+                        
+                      }),
+                  });
+                  if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                  }
+                const data = await response.json();
+                return data.result === "PASS";
+            } catch (error) {
+                console.error('ERROR:', error);
+            }
+        }
+        checkAnswer().then((r) => {
+            if (r) {
+                setStatistic({ ...statistic, numCorrect: numCorrect + 1 });
+            } else {
+                setStatistic({ ...statistic, numIncorrect: numIncorrect + 1 });
+            }
+        });
+    };
+
+    const handleSkipOrDone = () => {
+        if (!submitted) {
+            setStatistic({ ...statistic, numSkipped: numSkipped + 1 });
+        }
+        setState(states.PLAYING);
+        setSubmitted(false);
+    };
+
+    return (
+        <div className='flex flex-col justify-center text-center items-center w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4'>
+            <div className='text-xl font-bold text-gray-800 mb-4'>{`Type out your understanding of the last section in ${codeToFull[targetLanguage]} or transliterate/type it in ${codeToFull[sourceLanguage]}.`}</div>
+            <textarea
+                className='w-full h-32 p-2 border border-gray-300 rounded-lg'
+                value={answer}
+                onChange={handleAnswer}
+                disabled={submitted}
+            />
+            <div className='flex space-x-2'>
+                <button
+                    className={`btn transition-colors duration-150 ease-in-out font-bold py-2 px-4 rounded-lg ${submitted ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                    onClick={handleSubmit}
+                    disabled={submitted}
+                >
+                    Submit
+                </button>
+                <button
+                    className={`btn transition-colors duration-150 ease-in-out font-bold py-2 px-4 rounded-lg ${submitted ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
+                    onClick={handleSkipOrDone}
+                >
+                    {submitted ? 'Done' : 'Skip'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
 
 const GeneratedQuestion = (props) => {
     const { generation, statistic, setStatistic, setState, setGeneration } = props;
@@ -184,7 +314,6 @@ const GeneratedQuestion = (props) => {
 
     const handleSkipOrDone = () => {
         if (!submitted) {
-            // If not submitted, treat this as a skip
             setStatistic({ ...statistic, numSkipped: numSkipped + 1 });
         }
         setState(states.PLAYING);
@@ -192,6 +321,7 @@ const GeneratedQuestion = (props) => {
         setSubmitted(false);
         setGeneration(generated);
     };
+
 
     const buttonStyle = (index) => {
         if (submitted) {
@@ -209,8 +339,8 @@ const GeneratedQuestion = (props) => {
     };
 
     return (
-        <div className='flex flex-col justify-center items-center w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4'>
-            <div className='text-2xl font-bold text-gray-800 mb-4'>{question}</div>
+        <div className='flex flex-col justify-center items-center w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4 text-center'>
+            <div className='text-xl font-bold text-gray-800 mb-4'>{question}</div>
             {answers.map((answer, index) => (
                 <button
                     key={index}

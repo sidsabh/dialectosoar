@@ -42,15 +42,15 @@ app.get("/video-data", async (req, res) => {
 app.post('/generate-question', async (req, res) => {
   try {
     // Destructure the data from req.body instead of req.query
-    const { title, description, subtitles, targetLanguage, sourceLanguage } = req.body;
+    const { title, currSubtitles, targetLanguage, sourceLanguage } = req.body;
     
-    const prompt = `Create a multiple choice question for comprehension in ${targetLanguage} about this ${sourceLanguage} video titled ${title} with description ${description}. Label your lines as follows. "QUESTION: <question>", "ANSWER_CHOICE_<LETTER>": <answer_choice>", and "CORRECT_ANSWER": <correct_answer_letter>. Here are the subtitles for the video:\n\n${subtitles}. Make the question and answer choices as natural as possible on the last line of the subtitles.`;
+    const prompt = `Create a multiple choice question with 4 choices for comprehension about lines spoken in this ${sourceLanguage} video titled ${title}. Label your lines as follows. "QUESTION: <question>", "ANSWER_CHOICE_<LETTER>": <answer_choice>", and "CORRECT_ANSWER": <correct_answer_letter>. Make the question and answer choices test the student's comprehension and vocabulary in ${sourceLanguage}. Use both the ${sourceLanguage}'s script and its transliteration into ${targetLanguage}. Here are the last few lines from the video in subtitles for you to create questions from; you must use words only from this section and you can use syntax in ${targetLanguage}: ${currSubtitles}`;
 
     const response = await openai.chat.completions.create({
       messages: [{ role: 'system', content: prompt }],
       model: 'gpt-3.5-turbo',
-      max_tokens: 500,
-      temperature: 0.8,
+      max_tokens: 1000,
+      temperature: 0.7,
     });
 
     // // Assuming the response structure matches the SDK's expected format
@@ -76,6 +76,47 @@ app.post('/generate-question', async (req, res) => {
 
 
     res.status(200).json(answer);
+
+  }catch (error) {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('ERROR making request to OpenAI API:', error.response.data, 'Status:', error.response.status);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received:', error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Error:', error.message);
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+app.post('/check-writing', async (req, res) => {
+  try {
+    console.log("CALLED");
+    // Destructure the data from req.body instead of req.query
+    const { currSubtitles, writtenSubtitles, targetLanguage, sourceLanguage } = req.body;
+
+    console.log(currSubtitles, writtenSubtitles, targetLanguage, sourceLanguage);
+    
+    const prompt = `I have a user entering the subtitles they heard for a video in ${sourceLanguage}. They will enter what they understand the subtitles to be in ${targetLanguage} or ${sourceLanguage}. The subtitles are: ${currSubtitles}. The user has entered: ${writtenSubtitles}. Can you give them a pass or fail on their understanding of the subtitles? If they wrote the subtitles in ${targetLanguage}, then you should grade them on their understanding of the subtitles. If they wrote the subtitles in ${sourceLanguage}, then you should grade them on the accuracy of their scribing with a nice margin of error. Only return one line with either "PASS" or "FAIL".`;
+
+    const response = await openai.chat.completions.create({
+      messages: [{ role: 'system', content: prompt }],
+      model: 'gpt-3.5-turbo',
+      max_tokens: 1000,
+      temperature: 0.7,
+    });
+
+    let answer = {
+      "result": response.choices[0].message.content.trim() || "PASS"
+    };
+
+    res.status(200).json(answer);
+      
 
   }catch (error) {
     if (error.response) {
