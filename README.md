@@ -19,7 +19,7 @@ Watch your language skills soar through the language learning tool that prompts 
 
 3] Firebase APIs (Databasing)
 
-4] OpenAI APIs (Question Generation)
+4] OpenAI APIs (Question Generation & Vocabulary Extraction)
 
 ## Credits
 Sid Sabhnani: [GitHub](https://github.com/sidsabh)
