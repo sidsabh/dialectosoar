@@ -40,6 +40,7 @@ app.get("/video-data", async (req, res) => {
 
 
 app.post('/generate-question', async (req, res) => {
+  console.log("CALLED");
   try {
     // Destructure the data from req.body instead of req.query
     const { title, description, subtitles, targetLanguage, sourceLanguage } = req.body;
@@ -50,7 +51,7 @@ app.post('/generate-question', async (req, res) => {
       messages: [{ role: 'system', content: prompt }],
       model: 'gpt-3.5-turbo',
       max_tokens: 500,
-      temperature: 0.7,
+      temperature: 0.8,
     });
 
     // // Assuming the response structure matches the SDK's expected format

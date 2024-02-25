@@ -29,7 +29,7 @@ const statistics = {
 };
 
 const configuration = {
-    questionDelay: 5,
+    questionDelay: 10,
     numQuestions: 5,
     charsPerQuestion: 200
 }
@@ -90,19 +90,18 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     useEffect(() => {
         const getQuestion = async () => {
             try {
-                const the_body = JSON.stringify({
-                    title: videoDetails.title,
-                    description: videoDetails.description,
-                    subtitles: runningSubtitles.current,
-                    targetLanguage: codeToFull[targetLanguage],
-                    sourceLanguage: codeToFull[sourceLanguage],
-                  });
                 const response = await fetch(`${url}/generate-question`, {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
                     },
-                    body: the_body,
+                    body: JSON.stringify({
+                        title: videoDetails.title,
+                        description: videoDetails.description,
+                        subtitles: runningSubtitles.current,
+                        targetLanguage: codeToFull[targetLanguage],
+                        sourceLanguage: codeToFull[sourceLanguage],
+                      }),
                   });
                   if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -124,7 +123,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
             }
         }
         if (roundedSeconds >= pauseTimeRef.current && runningSubtitles.current.length > 200) {
-            pauseTimeRef.current += config.questionDelay;
+            pauseTimeRef.current = roundedSeconds + config.questionDelay;
             setState(states.PAUSED);
             getQuestion();
         }
@@ -138,7 +137,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 <ReactPlayer
                     className="react-player"
                     url={videoUrl}
-                    controls={false}
+                    controls={true}
                     onProgress={(s) => setSeconds(s.playedSeconds)}
                     playing={state === states.PLAYING}
                 />
@@ -150,7 +149,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
             </div>
             <div
                 className={`w-1/2 mx-auto ${state === states.PLAYING ? 'invisible' : 'visible'}`}>
-                <GeneratedQuestion {...{generation, statistic, setStatistic, setState}}/>
+                <GeneratedQuestion {...{generation, statistic, setStatistic, setState, setGeneration}}/>
             </div>
                 
         </div>
@@ -160,7 +159,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 };
 
 const GeneratedQuestion = (props) => {
-    const { generation, statistic, setStatistic, setState } = props;
+    const { generation, statistic, setStatistic, setState, setGeneration } = props;
     const { question, answers, correctAnswerIndex } = generation;
     const { numCorrect, numIncorrect, numSkipped } = statistic;
 
@@ -191,6 +190,7 @@ const GeneratedQuestion = (props) => {
         setState(states.PLAYING);
         setSelectedAnswer(-1);
         setSubmitted(false);
+        setGeneration(generated);
     };
 
     const buttonStyle = (index) => {
