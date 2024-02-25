@@ -1,12 +1,27 @@
+@font-face {
+    font-family: 'YourCustomFont';
+    src: url('./Russo_One/RussoOne-Regular.ttf') format('woff2');
+}
+:root {
+    --headerColor: #4C2E05;
+    --headerTextColor: green;
+    --genBackgroundColor: red;
+  }
+  
 .header {
   display: flex; /* Use flexbox */
+  font-family: 'YourCustomFont', sans-serif;
+  background-color: var(--headerColor);
+  color: var(--headerColor);
   grid-template-columns: repeat(3, 1fr);
   align-items: center; /* Center items vertically */
-  height: 50px;
+  height: 100px;
 }
 
 .third {
   text-align: center; /* Center text horizontally */
+  background-color: var(--headerColor);
+  color: var(--headerColor);
   flex: 1;
   align-items: center;
   display: flex;
@@ -14,12 +29,46 @@
   justify-content: center;
 }
 
+.background {
+    background-color: var(--genBackgroundColor);
+}
+
 .logo {
-  width: 100px;
-  height: 50px;
+  width: 200px;
+  height: 100px;
 }
 
 .text-container {
   display: flex;
   align-items: center;
 }
+
+/* Light theme styles */
+.theme-light .header {
+    background-color: var(--headerColor);
+    color: var(--headerTextColor);
+  }
+  
+  .theme-light .third {
+    background-color: var(--headerColor);
+    color: var(--headerTextColor);
+  }
+  
+  .theme-light .background {
+    background-color: var(--genBackgroundColor);
+  }
+  
+  /* Dark theme styles */
+  .theme-dark .header {
+    background-color: black;
+    color: black;
+  }
+  
+  .theme-dark .third {
+    background-color: black;
+    color: black;
+  }
+  
+  .theme-dark .background {
+    background-color: black;
+  }
