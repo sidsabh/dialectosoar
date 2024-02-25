@@ -1,6 +1,26 @@
 import React from 'react';
 import ReactPlayer from 'react-player/youtube';
 import { useState, useEffect, useRef } from 'react';
+//import necessary stuff for firestore:
+import { initializeApp } from 'firebase/app';
+import { addDoc, collection } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAXP9shKP9Y7i2D-MBUoy-ZorzAhlZutAY",
+    authDomain: "rowdyhacks-661ac.firebaseapp.com",
+    projectId: "rowdyhacks-661ac",
+    storageBucket: "rowdyhacks-661ac.appspot.com",
+    messagingSenderId: "1065696678547",
+    appId: "1:1065696678547:web:b04a49be56f5765d937366",
+    measurementId: "G-V4GSNS6EH7"
+  };
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+
+
 
 const codeToFull = {
     en: 'English',
@@ -91,6 +111,40 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         fetchSubtitles();
     }, [sourceLanguage, videoUrl]);
 
+    
+
+    useEffect(() => {
+        const getSet = async () => {
+        try {
+            const response = await fetch(`${url}/extract-subtitles`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: videoDetails.title,
+                    description: videoDetails.description,
+                    // allSubtitles: allSubtitles.current,
+                    currSubtitles: currSubtitles.current,
+                    targetLanguage: codeToFull[targetLanguage],
+                    sourceLanguage: codeToFull[sourceLanguage],
+                  }),
+              });
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+            const data = await response.json();
+            addDoc(collection(db, "vocab"), data);
+        } catch (error) {
+            console.error('ERROR:', error);
+        }
+        //get extract vocab
+        }
+        //if stopped, then getSet
+        if (seconds > 10) {
+            getSet();
+        }
+    }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, currSubtitles]);
 
     useEffect(() => {
 
@@ -152,7 +206,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         if (roundedSeconds >= pauseTimeRef.current && currSubtitles.current.length > 50) {
             pauseTimeRef.current = roundedSeconds + config.secondsPerQuestion;
             
-            if (Math.random() < percentMCQ) {
+            if (Math.random() < configuration.percentMCQ) {
                 setState(states.MCQ);
                 getQuestion();
             } else {

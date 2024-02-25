@@ -38,6 +38,34 @@ app.get("/video-data", async (req, res) => {
   }
 });
 
+app.post('/extract-subtitles', async (req, res) => {
+  try {
+    const { title, currSubtitles, targetLanguage, sourceLanguage } = req.body;
+    const prompt = `Extract the vocabulary words in the ${sourceLanguage} language and give their translated meanings in the ${targetLanguage} language from these subtitles: \n\n ${currSubtitles}. Each line should follow format <vocabulary word> : <translated meaning> each on a new line.`;
+    const response = await openai.chat.completions.create({
+      messages: [{ role: 'system', content: prompt }],
+      model: 'gpt-3.5-turbo',
+      max_tokens: 500,
+      temperature: 0.7,
+    });
+
+    //so for the response, we are gonna end up putting the vocabulary word and their translated meaning into a dictionary.
+    //using firebase firestore to store the data. so package the data accordingly:
+    // const output = response.choices[0].message.content.trim();
+    const output = response.choices[0].message.content.trim();
+    const vocabMatches = output.match(/(.*) : (.*)/g);
+    let vocab = {};
+    vocabMatches.forEach((match) => {
+      const [word, meaning] = match.split(' : ');
+      vocab[word] = meaning;
+    });
+
+    res.status(200).json(vocab);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.post('/generate-question', async (req, res) => {
   try {
