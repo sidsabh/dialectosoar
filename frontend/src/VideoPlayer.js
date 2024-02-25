@@ -6,6 +6,11 @@ import { initializeApp } from 'firebase/app';
 import { addDoc, collection } from 'firebase/firestore';
 import { getFirestore } from 'firebase/firestore';
 
+//dotenv
+import dotenv from 'dotenv';
+dotenv.config();
+const url = process.env.REACT_APP_BACKEND_URL;
+
 const firebaseConfig = {
     apiKey: "AIzaSyAXP9shKP9Y7i2D-MBUoy-ZorzAhlZutAY",
     authDomain: "rowdyhacks-661ac.firebaseapp.com",
@@ -41,7 +46,6 @@ const codeToFull = {
 
 
 // const
-const url = 'http://localho.st:3001';
 const states = {
     PLAYING: 'PLAYING',
     MCQ: 'MCQ',
@@ -63,10 +67,6 @@ const configuration = {
     secondsPerQuestion: 15,
     charsPerQuestion: 200,
     percentMCQ: 0.5
-}
-
-const VocabData = {
-    data: []
 }
 
 
@@ -91,6 +91,8 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     const [config, setConfig] = useState(configuration);
 
     const pauseTimeRef = useRef(config.secondsPerQuestion);
+
+    const [VocabData, setVocabData] = useState({});
 
     let currSubtitles = useRef("");
     let startTime = useRef(0);
@@ -136,7 +138,8 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                         throw new Error('Network response was not ok');
                     }
                     const data = await response.json();
-                    VocabData.data.push(data);
+                    // VocabData.data.push(data);
+                    setVocabData(data);
                     addDoc(collection(db, "vocab"), data);
                 } catch (error) {
                     console.error('ERROR:', error);
@@ -248,7 +251,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
                 <div className="text-blue-600">Skipped: {statistic.numSkipped}</div>
             </div>
-                <Dictionary className="mt-5"/>
+                <Dictionary className="mt-5"VocabData={VocabData}/>
             </div>
 
             }
@@ -270,8 +273,9 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     
 };
 
-const Dictionary = () => {
+const Dictionary = (VocabData) => {
     return (
+
         <>
             <div className='flex flex-col justify-center text-center items-centerrounded-lg shadow-lg p-6 space-y-4 border border-gray-300 mt-5 w-1/2 mx-auto'
             style={{ background: localStorage.getItem('theme') === 'theme-dark' ? 'rgba(116, 117, 121, 1.0)' : 'rgba(141, 176, 87, 0.8)' }}>
@@ -289,13 +293,11 @@ const Dictionary = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {VocabData.data.map((vocab, index) => (
-                                    Object.keys(vocab).map((word, index) => (
-                                        <tr key={index} className='border-b'>
-                                            <td className='px-4 py-2'>{word}</td>
-                                            <td className='px-4 py-2'>{vocab[word]}</td>
-                                        </tr>
-                                    ))
+                            {Object.keys(VocabData.VocabData).map((word, index) => (
+                                <tr key={index} className='border-b'>
+                                    <td className='px-4 py-2'>{word.replace(/"/g, '')}</td>
+                                    <td className='px-4 py-2'>{VocabData.VocabData[word].replace(/"/g, '')}</td>
+                                </tr>
                                 ))}
                         </tbody>
                     </table>

@@ -7,7 +7,6 @@ function setTheme(themeName, setClassName) {
 }
 function keepTheme(setClassName) {
   const theme = localStorage.getItem('theme');
-  console.log('Current theme:', theme);
   if (theme) {
     setTheme(theme, setClassName);
     return;

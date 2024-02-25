@@ -37,13 +37,13 @@ app.post('/extract-subtitles', async (req, res) => {
     Subtitles:\n\n${allSubtitles}
     `;
 
+
     const response = await openai.chat.completions.create({
       messages: [{ role: 'system', content: prompt }],
       model: model,
       max_tokens: 500,
       temperature: 0.7,
     });
-
 
     //so for the response, we are gonna end up putting the vocabulary word and their translated meaning into a dictionary.
     //using firebase firestore to store the data. so package the data accordingly:

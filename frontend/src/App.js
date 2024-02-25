@@ -33,12 +33,7 @@ const App = () => {
 
     useEffect(() => {
         keepTheme(setClassName);
-        console.log(className); // Add this line to log className
     }, [setClassName]);
-
-    useEffect(() => {
-        console.log(className);
-    }, [className]);
 
     return (
         (localStorage.getItem('theme') ==='theme-dark') ? 
