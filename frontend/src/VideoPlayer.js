@@ -319,6 +319,7 @@ const Dictionary = () => {
     return (
         <div className="w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4">
             <div className="text-2xl font-bold text-gray-800 mb-4">Vocabulary
+            style={{ background: localStorage.getItem('theme') === 'theme-dark' ? '#808080' : '#C0C0C0', color: localStorage.getItem('theme') === 'theme-dark' ? 'black' : 'white' }}
             </div>
             <table className="w-full">
                 <thead>
