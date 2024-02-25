@@ -14,12 +14,18 @@ Watch your language skills soar through the language learning tool that prompts 
 
 ## Software Used
 1] YouTube APIs (Subtitle/Transcript Access)
+
 2] YouTube APIs (Embedded Video Player)
+
 3] Firebase APIs (Databasing)
+
 4] OpenAI APIs (Question Generation)
 
 ## Credits
-Sid Sabhnani: [GitHub]([url](https://github.com/sidsabh))
+Sid Sabhnani: [GitHub]((https://github.com/sidsabh))
+
 Zayaan Rahman: [GitHub]([url](https://github.com/grizzledwarvet23))
+
 Parul Gupta: [GitHub]([url](https://github.com/parulg22))
+
 Anshul Gulati: [GitHub]([url](https://github.com/ShadowDucktor)https://github.com/ShadowDucktor)
