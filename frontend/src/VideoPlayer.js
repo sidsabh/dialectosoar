@@ -7,8 +7,6 @@ import { addDoc, collection } from 'firebase/firestore';
 import { getFirestore } from 'firebase/firestore';
 
 //dotenv
-import dotenv from 'dotenv';
-dotenv.config();
 const url = process.env.REACT_APP_BACKEND_URL;
 
 const firebaseConfig = {
