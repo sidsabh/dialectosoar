@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import VideoPlayer from './VideoPlayer';
 import { codeToFull } from './constants';
 import { useEffect } from 'react';
-import logo from './logo.png';
+import './Header.css';
 
 const App = () => {
     const [submitted, setSubmitted] = useState(false);
@@ -23,7 +23,7 @@ const App = () => {
                 <div className="header" style={{ background: '#8F683F', display: 'flex', alignItems: 'center' }}>
                     <div className="third" style = {{background: '#8F683F', flex: 1}}>
                         <div className="logo">
-                            <img src={logo} alt = "Dialectosoar" style ={{ width: '100px', height: '50px' }}/>
+                            <img src='/logo.png' alt = "Dialectosoar" style ={{ width: '100px', height: '50px' }}/>
                         </div>
                     </div>
                     <div className="third" style = {{background: '#8F683F', flex: 1}}>

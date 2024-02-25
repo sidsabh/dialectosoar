@@ -1,0 +1,25 @@
+.header {
+  display: flex; /* Use flexbox */
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center; /* Center items vertically */
+  height: 50px;
+}
+
+.third {
+  text-align: center; /* Center text horizontally */
+  flex: 1;
+  align-items: center;
+  display: flex;
+  flex-direction: column; /* Stack content vertically */
+  justify-content: center;
+}
+
+.logo {
+  width: 100px;
+  height: 50px;
+}
+
+.text-container {
+  display: flex;
+  align-items: center;
+}
