@@ -65,8 +65,18 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         const fetchSubtitles = async () => {
             try {
                 const response = await fetch(
-                    `${url}/video-data?videoID=${videoUrl.split('v=')[1]}&lang=${sourceLanguage}`
-                    );
+                    `${url}/video-data`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        params: {
+                            videoID: videoUrl.split('v=')[1],
+                            lang: sourceLanguage
+                        }
+                    }
+                );
                 const data = await response.json();
                 setVideoDetails(data.videoDetails);
             } catch (error) {
@@ -76,24 +86,27 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         fetchSubtitles();
     }, [sourceLanguage, videoUrl]);
 
-    // handleQuestion function
-    const handleQuestion = () => {
-        // display question
-        // display answers
-        // if user selects correct answer, continue playing video
-        // if user selects incorrect answer, display correct answer and continue playing video
-        // if user does not select an answer, display correct answer and continue playing video
-
-        
-    }
 
     useEffect(() => {
         const getQuestion = async () => {
             try {
                 
                 const response = await fetch(
-                    '/generate-question'
-                    );
+                    `${url}/generate-question`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sourceLanguage,
+                            targetLanguage,
+                            videoDetails,
+                            seconds
+                        })
+                    }
+                );
+                // const response = fakeGenerateQuestion();
                 const data = await response.json();
                 setGeneration(
                     {
@@ -111,9 +124,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         if (roundedSeconds >= pauseTimeRef.current) {
             pauseTimeRef.current += config.questionDelay;
             setState(states.PAUSED);
-            getQuestion().then(() => { 
-                handleQuestion();
-            });
+            getQuestion();
         }
 
     }, [seconds, config]);

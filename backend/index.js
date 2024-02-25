@@ -29,13 +29,15 @@ app.get("/video-data", async (req, res) => {
 
 app.post('/generate-question', async (req, res) => {
   try {
-    const videoTranscript = req.body.transcript;
+    const videoDetails = req.body.videoDetails;
+    const videoTranscript = videoDetails.subtitles.map(subtitle => subtitle.text);
     const combinedText = videoTranscript.join(' ');
+    const seconds = req.body.seconds;
 
     const targetLanguage = req.body.targetLanguage;
     const sourceLanguage = req.body.sourceLanguage;
     // Generate a prompt for GPT-3
-    const prompt = `Create a comprehension multiple choice question in ${targetLanguage} about this ${sourceLanguage} text. Put the correct answer after.:\n\n${combinedText}`;
+    const prompt = `Create a comprehension multiple choice question in ${targetLanguage} about this ${sourceLanguage} the video titled ${videoDetails.title} with description ${videoDetails.description}. We want the question to only cover content up to ${seconds}. Put the correct answer after.:\n\n${combinedText}`;
 
     const response = await axios.post(
       'https://api.openai.com/v1/engines/davinci-codex/completions',
@@ -60,7 +62,7 @@ app.post('/generate-question', async (req, res) => {
 
     console.log(answerChoices);
 
-    res.json({ question: generatedQuestion, choices: answerChoices });
+    res.json({ question: generatedQuestion, answers: answerChoices });
   } catch (error) {
     console.error('Error making request to OpenAI API:', error.message);
     res.status(500).json({ error: 'Internal Server Error' });
