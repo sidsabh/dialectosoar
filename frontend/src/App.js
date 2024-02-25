@@ -64,7 +64,7 @@ const App = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto mt-5"
+                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto mt-5 border border-gray-300 rounded-md"
                     style = {{ background: "#747579"}}>
                     <input
                         type="text"
@@ -143,7 +143,7 @@ const App = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto  mt-5"
+                <div className="flex flex-col items-center justify-center p-5 space-y-4 w-full max-w-md mx-auto  mt-5 border border-gray-300 rounded-md"
                     style = {{ background: "#8DB057"}}>
                     <input
                         type="text"

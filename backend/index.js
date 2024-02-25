@@ -1,28 +1,18 @@
-// server/index.js
-// const yce = require('youtube-caption-extractor');
 import yce from 'youtube-caption-extractor';
-
-// const express = require("express");
 import express from 'express';
-
 const PORT = process.env.PORT || 3001;
 const app = express();
-// const cors = require("cors");
 import cors from 'cors';
-// require('dotenv').config()
 import dotenv from 'dotenv';
-dotenv.config();
-
-
-
 import OpenAI from 'openai';
 
+// model= "gpt-3.5-turbo";
+let model= "gpt-4";
+
+dotenv.config();
 const openai = new OpenAI({
   apiKey: process.env['OPENAI_API_KEY'], // This is the default and can be omitted
 });
-
-
-
 app.use(cors());
 app.use(express.json());
 
@@ -40,14 +30,20 @@ app.get("/video-data", async (req, res) => {
 
 app.post('/extract-subtitles', async (req, res) => {
   try {
-    const { title, currSubtitles, targetLanguage, sourceLanguage } = req.body;
-    const prompt = `Extract the vocabulary words in the ${sourceLanguage} language and give their translated meanings in the ${targetLanguage} language from these subtitles: \n\n ${currSubtitles}. Each line should follow format <vocabulary word> : <translated meaning> each on a new line.`;
+    const { title, allSubtitles, targetLanguage, sourceLanguage } = req.body;
+    const prompt = `
+    From the provided subtitles in ${sourceLanguage}, identify key vocabulary words and translate them into ${targetLanguage}. Please format your response with each vocabulary word followed by its translation, on separate lines, like this: "<vocabulary word> : <translated meaning>". Focus on extracting and translating words that are essential to the context of the subtitles.
+
+    Subtitles:\n\n${allSubtitles}
+    `;
+
     const response = await openai.chat.completions.create({
       messages: [{ role: 'system', content: prompt }],
-      model: 'gpt-3.5-turbo',
+      model: model,
       max_tokens: 500,
       temperature: 0.7,
     });
+
 
     //so for the response, we are gonna end up putting the vocabulary word and their translated meaning into a dictionary.
     //using firebase firestore to store the data. so package the data accordingly:
@@ -72,11 +68,22 @@ app.post('/generate-question', async (req, res) => {
     // Destructure the data from req.body instead of req.query
     const { title, currSubtitles, targetLanguage, sourceLanguage } = req.body;
     
-    const prompt = `Create a multiple choice question with 4 choices for comprehension about lines spoken in this ${sourceLanguage} video titled ${title}. Label your lines as follows. "QUESTION: <question>", "ANSWER_CHOICE_<LETTER>": <answer_choice>", and "CORRECT_ANSWER": <correct_answer_letter>. Make the question and answer choices test the student's comprehension and vocabulary in ${sourceLanguage}. Use both the ${sourceLanguage}'s script and its transliteration into ${targetLanguage}. Here are the last few lines from the video in subtitles for you to create questions from; you must use words only from this section and you can use syntax in ${targetLanguage}: ${currSubtitles}`;
+    const prompt = `
+      Create a multiple-choice comprehension question in ${targetLanguage} based on the subtitles from a ${sourceLanguage} video titled "${title}". The question should focus on testing the viewer's understanding and vocabulary related to the content of these subtitles. 
+
+      Include:
+      - One question labeled as "QUESTION:".
+      - Four answer choices, each labeled as "ANSWER_CHOICE_<LETTER>" (A, B, C, D).
+      - Indicate the correct answer with "CORRECT_ANSWER:" followed by the letter of the correct choice.
+
+      Use both the original script from ${sourceLanguage} and provide a transliteration into ${targetLanguage} for each part of the question and answers. The content for your question should only be derived from the following subtitles section: ${currSubtitles}. 
+
+      Ensure that the question and all answer choices are presented in ${targetLanguage}, resulting in a total of six lines: one for the question, four for the answer choices, and one indicating the correct answer. This task aims to assess the student's comprehension and vocabulary skills in ${sourceLanguage}, utilizing ${targetLanguage}'s syntax where applicable.
+      `;
 
     const response = await openai.chat.completions.create({
       messages: [{ role: 'system', content: prompt }],
-      model: 'gpt-3.5-turbo',
+      model: model,
       max_tokens: 1000,
       temperature: 0.7,
     });
@@ -124,17 +131,20 @@ app.post('/generate-question', async (req, res) => {
 
 app.post('/check-writing', async (req, res) => {
   try {
-    console.log("CALLED");
     // Destructure the data from req.body instead of req.query
     const { currSubtitles, writtenSubtitles, targetLanguage, sourceLanguage } = req.body;
 
-    console.log(currSubtitles, writtenSubtitles, targetLanguage, sourceLanguage);
-    
-    const prompt = `I have a user entering the subtitles they heard for a video in ${sourceLanguage}. They will enter what they understand the subtitles to be in ${targetLanguage} or ${sourceLanguage}. The subtitles are: ${currSubtitles}. The user has entered: ${writtenSubtitles}. Can you give them a pass or fail on their understanding of the subtitles? If they wrote the subtitles in ${targetLanguage}, then you should grade them on their understanding of the subtitles. If they wrote the subtitles in ${sourceLanguage}, then you should grade them on the accuracy of their scribing with a nice margin of error. Only return one line with either "PASS" or "FAIL".`;
+    const prompt = `
+    A user has transcribed or translated subtitles from a video in ${sourceLanguage} into either ${targetLanguage} or ${sourceLanguage}. Their submission is based on the original subtitles: ${currSubtitles}, and their version is: ${writtenSubtitles}. 
+
+    Please evaluate their submission for comprehension (if translated into ${targetLanguage}) or accuracy (if transcribed in ${sourceLanguage}). Use a lenient grading approach, allowing for a "PASS" if the submission broadly captures the meaning, especially prioritizing the accuracy of later parts of the context. 
+
+    Return a single verdict: "PASS" if the user's understanding or transcription is generally correct, or "FAIL" if it significantly deviates from the original content.
+    `;
 
     const response = await openai.chat.completions.create({
       messages: [{ role: 'system', content: prompt }],
-      model: 'gpt-3.5-turbo',
+      model: model,
       max_tokens: 1000,
       temperature: 0.7,
     });

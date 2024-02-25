@@ -20,10 +20,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 
-
-
-
-
 const codeToFull = {
     en: 'English',
     es: 'Spanish',
@@ -64,7 +60,7 @@ const statistics = {
 };
 
 const configuration = {
-    secondsPerQuestion: 10,
+    secondsPerQuestion: 15,
     charsPerQuestion: 200,
     percentMCQ: 0.5
 }
@@ -99,7 +95,6 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     let currSubtitles = useRef("");
     let startTime = useRef(0);
     let allSubtitles = useRef("");
-    const [vocabDataDone, setVocabDataDone] = useState(false); // Use state for vocabDataDone
 
 
     // fetch subtitles
@@ -120,74 +115,69 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         fetchSubtitles();
     }, [sourceLanguage, videoUrl]);
 
-    
-
     useEffect(() => {
-        const getSet = async () => {
-        try {
-            const response = await fetch(`${url}/extract-subtitles`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    title: videoDetails.title,
-                    description: videoDetails.description,
-                    // allSubtitles: allSubtitles.current,
-                    currSubtitles: currSubtitles.current,
-                    targetLanguage: codeToFull[targetLanguage],
-                    sourceLanguage: codeToFull[sourceLanguage],
-                  }),
-              });
-              if (!response.ok) {
-                throw new Error('Network response was not ok');
-              }
-            const data = await response.json();
-            console.log(data);
-            VocabData.data.push(data);
-            addDoc(collection(db, "vocab"), data);
-        } catch (error) {
-            console.error('ERROR:', error);
-        }
-        }
+        if(state === states.STOPPED) {
+            const getSet = async () => {
+                try {
+                    const response = await fetch(`${url}/extract-subtitles`, {
+                        method: 'POST',
+                        headers: {
+                        'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            title: videoDetails.title,
+                            description: videoDetails.description,
+                            allSubtitles: allSubtitles.current,
+                            targetLanguage: codeToFull[targetLanguage],
+                            sourceLanguage: codeToFull[sourceLanguage],
+                        }),
+                    });
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const data = await response.json();
+                    VocabData.data.push(data);
+                    addDoc(collection(db, "vocab"), data);
+                } catch (error) {
+                    console.error('ERROR:', error);
+                }
 
-        if(seconds > 0 && !vocabDataDone)
-        {
-            // setVocabDataDone(true);
-            getSet();
-        }
-    }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, currSubtitles]);
-
-    useEffect(() => {
-
-
-        const getQuestion = async () => {
-            try {
-                const response = await fetch(`${url}/generate-question`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        title: videoDetails.title,
-                        description: videoDetails.description,
-                        // allSubtitles: allSubtitles.current,
-                        currSubtitles: currSubtitles.current,
-                        targetLanguage: codeToFull[targetLanguage],
-                        sourceLanguage: codeToFull[sourceLanguage],
-                      }),
-                  });
-                  if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                  }
-                const data = await response.json();
-                setGeneration(data);
-            } catch (error) {
-                console.error('ERROR:', error);
             }
+            getSet();
+        } else if (state === states.MCQ) {
+            const getQuestion = async () => {
+                try {
+                    const response = await fetch(`${url}/generate-question`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            title: videoDetails.title,
+                            description: videoDetails.description,
+                            // allSubtitles: allSubtitles.current,
+                            currSubtitles: currSubtitles.current,
+                            targetLanguage: codeToFull[targetLanguage],
+                            sourceLanguage: codeToFull[sourceLanguage],
+                          }),
+                      });
+                      if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                      }
+                    const data = await response.json();
+                    setGeneration(data);
+                } catch (error) {
+                    console.error('ERROR:', error);
+                }
+            }
+            getQuestion();
+            currSubtitles.current = "";
         }
+    }, [state, currSubtitles, videoDetails, sourceLanguage, targetLanguage]);
 
-        const roundedSeconds = Math.floor(seconds);
+    useEffect(() => {
+
+        const roundedSeconds = Math.floor(seconds) - 1;
 
         if (roundedSeconds >= duration) {
             setState(states.STOPPED);
@@ -214,30 +204,21 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
             
         }
 
-
         if (roundedSeconds >= pauseTimeRef.current && currSubtitles.current.length > 50) {
             pauseTimeRef.current = roundedSeconds + config.secondsPerQuestion;
             
             if (Math.random() < configuration.percentMCQ) {
                 setState(states.MCQ);
-                getQuestion();
             } else {
                 setState(states.WRITING);
-                
             }
-            
             startTime.current = roundedSeconds;
-            currSubtitles.current = "";
         }
 
     }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, currSubtitles]);
 
-    useEffect(() => {
-        console.log(state);
-    }, [state]);
-
     return (
-        <div className="pt-24 space-y-4">
+        <div className="pt-12 space-y-4">
             {(state !== states.STOPPED )
             ?
             <div>
@@ -252,50 +233,26 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                         onDuration={(duration) => duration && setDuration(duration)}
                 />
             </div>
-            <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
-                <div className="text-green-600">Correct: {statistic.numCorrect}</div>
-                <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
-                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
+            <div className="flex justify-around border mt-5 rounded-lg p-2 w-1/2 mx-auto " 
+                style={{ background: localStorage.getItem('theme') === 'theme-dark' ? 'rgba(116, 117, 121, 1.0)' : 'rgba(141, 176, 87, 0.8)' }}>
+                <div className="text-green-900">Correct: {statistic.numCorrect}</div>
+                <div className="text-red-700">Incorrect: {statistic.numIncorrect}</div>
+                <div className="text-blue-800">Skipped: {statistic.numSkipped}</div>
             </div>
             </div>
             :
             <div>
-            <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
+            <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto"
+                style={{ background: localStorage.getItem('theme') === 'theme-dark' ? 'rgba(116, 117, 121, 1.0)' : 'rgba(141, 176, 87, 0.8)' }}>
                 <div className="text-green-600">Correct: {statistic.numCorrect}</div>
                 <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
-                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
+                <div className="text-blue-600">Skipped: {statistic.numSkipped}</div>
             </div>
-            <Dictionary />
+                <Dictionary className="mt-5"/>
             </div>
 
             }
 
-
-
-
-            {/* <div className="w-full flex justify-center items-center">
-                {
-                (state !== states.STOPPED )
-                ?
-                <ReactPlayer
-                    className="react-player"
-                    url={videoUrl}
-                    controls={true}
-                    onProgress={(s) => setSeconds(s.playedSeconds)}
-                    playing={state === states.PLAYING}
-                    onEnded={() => setState(states.STOPPED)}
-                    onDuration={(duration) => duration && setDuration(duration)}
-                />
-                :
-                <Dictionary />
-                
-                }
-            </div>
-            <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
-                <div className="text-green-600">Correct: {statistic.numCorrect}</div>
-                <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
-                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
-            </div> */}
             <div className={`w-1/2 mx-auto ${(state === states.MCQ || state === states.WRITING) ? 'visible' : 'invisible'}`}>
                 {
                     state === states.MCQ ? 
@@ -314,42 +271,40 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 };
 
 const Dictionary = () => {
-    console.log(VocabData.data);
-    //given vocabdata.data, display it visually in a table choose like 10 word definition pairs to display:
     return (
-        <div className="w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4">
-            <div className="text-2xl font-bold text-gray-800 mb-4">Vocabulary
-            style={{ background: localStorage.getItem('theme') === 'theme-dark' ? '#808080' : '#C0C0C0', color: localStorage.getItem('theme') === 'theme-dark' ? 'black' : 'white' }}
+        <>
+            <div className='flex flex-col justify-center text-center items-centerrounded-lg shadow-lg p-6 space-y-4 border border-gray-300 mt-5 w-1/2 mx-auto'
+            style={{ background: localStorage.getItem('theme') === 'theme-dark' ? 'rgba(116, 117, 121, 1.0)' : 'rgba(141, 176, 87, 0.8)' }}>
+                <div className='text-xl font-bold mb-4'
+                style={{ color: localStorage.getItem('theme') === 'theme-dark' ? '#C0C0C0' : 'black' }}
+                >
+                    Vocabulary
+                </div>
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    <table className='w-full' style={{ color: localStorage.getItem('theme') === 'theme-dark' ? '#C0C0C0' : 'black' }}>
+                        <thead>
+                            <tr>
+                                <th className='border'>Word</th>
+                                <th className='border '>Translation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {VocabData.data.map((vocab, index) => (
+                                    Object.keys(vocab).map((word, index) => (
+                                        <tr key={index} className='border-b'>
+                                            <td className='px-4 py-2'>{word}</td>
+                                            <td className='px-4 py-2'>{vocab[word]}</td>
+                                        </tr>
+                                    ))
+                                ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <table className="w-full">
-                <thead>
-                    <tr>
-                        <th className="text-left">Word</th>
-                        <th className="text-left">Definition</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        
-                        VocabData.data.
-                             map((vocab, index) => (
-                            Object.keys(vocab).map((word, index) => (
-
-                                <tr key={index}>
-                                    <td>{word}</td>
-                                    <td>{vocab[word]}</td>
-                                </tr>
-                            ))
-                        ))
-                            
-                        
-                    }
-                </tbody>
-            </table>
-        </div>
+        </>
     );
-
 };
+
 
 
 const GeneratedWriting = (props) => {
@@ -410,10 +365,12 @@ const GeneratedWriting = (props) => {
     };
 
     return (
-        <div className='flex flex-col justify-center text-center items-center w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4'>
+        <div className='flex flex-col justify-center text-center items-center w-full h-96 bg-gray-50 shadow-lg p-6 space-y-4  border border-gray-300 rounded-md'
+        style={{ background: localStorage.getItem('theme') === 'theme-dark' ? 'rgba(116, 117, 121, 1.0)' : 'rgba(141, 176, 87, 0.8)' }}>
             <div className='text-xl font-bold text-gray-800 mb-4'>{`Type out your understanding of the last section in ${codeToFull[targetLanguage]} or transliterate/type it in ${codeToFull[sourceLanguage]}.`}</div>
             <textarea
-                className='w-full h-32 p-2 border border-gray-300 rounded-lg'
+                className='w-full h-32 p-2 border rounded-lg' 
+                style={{ background: localStorage.getItem('theme') === 'theme-dark' ? 'rgba(116, 117, 121, 1.0)' : 'rgba(141, 176, 87, 0.8)' }}
                 value={answer}
                 onChange={handleAnswer}
                 disabled={submitted}
@@ -490,7 +447,8 @@ const GeneratedQuestion = (props) => {
     };
 
     return (
-        <div className='flex flex-col justify-center items-center w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4 text-center'>
+        <div className='flex flex-col justify-center items-center w-full h-96 rounded-lg shadow-lg p-6 space-y-4 text-center  border border-gray-300 rounded-md"'
+        style={{ background: localStorage.getItem('theme') === 'theme-dark' ? 'rgba(116, 117, 121, 1.0)' : 'rgba(141, 176, 87, 0.8)' }}>
             <div className='text-xl font-bold text-gray-800 mb-4'>{question}</div>
             {answers.map((answer, index) => (
                 <button
