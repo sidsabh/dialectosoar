@@ -40,7 +40,6 @@ app.get("/video-data", async (req, res) => {
 
 
 app.post('/generate-question', async (req, res) => {
-  console.log("CALLED");
   try {
     // Destructure the data from req.body instead of req.query
     const { title, description, subtitles, targetLanguage, sourceLanguage } = req.body;
