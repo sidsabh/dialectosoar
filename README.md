@@ -1,4 +1,6 @@
 # Dialectosoar
+![new_wob_git](https://github.com/sidsabh/dialectosoar/assets/147094276/6f81faa7-a670-4ccd-98de-08734382cfbe)
+
 ## Description
 
 An app that helps people learn new languages through watching videos with integrated language understanding and comprehension checks
