@@ -22,6 +22,8 @@ const db = getFirestore(app);
 
 
 
+
+
 const codeToFull = {
     en: 'English',
     es: 'Spanish',
@@ -67,6 +69,12 @@ const configuration = {
     percentMCQ: 0.5
 }
 
+const VocabData = {
+    data: []
+}
+
+
+
 const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
     // parent
@@ -91,6 +99,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     let currSubtitles = useRef("");
     let startTime = useRef(0);
     let allSubtitles = useRef("");
+    const [vocabDataDone, setVocabDataDone] = useState(false); // Use state for vocabDataDone
 
 
     // fetch subtitles
@@ -134,18 +143,19 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 throw new Error('Network response was not ok');
               }
             const data = await response.json();
+            console.log(data);
+            VocabData.data.push(data);
             addDoc(collection(db, "vocab"), data);
         } catch (error) {
             console.error('ERROR:', error);
         }
-        //get extract vocab
         }
-        //if stopped, then getSet
 
-        // `console.log(state);`
-        // if (state === states.STOPPED) {
-        //     getSet();
-        // }
+        if(seconds > 0 && !vocabDataDone)
+        {
+            // setVocabDataDone(true);
+            getSet();
+        }
     }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, currSubtitles]);
 
     useEffect(() => {
@@ -268,14 +278,40 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 };
 
 const Dictionary = () => {
-    
-
-
+    console.log(VocabData.data);
+    //given vocabdata.data, display it visually in a table choose like 10 word definition pairs to display:
     return (
-        <div className="w-full h-96 flex justify-center items-center bg-gray-50 rounded-lg shadow-lg p-6 space-y-4">
-            <div className="text-xl font-bold text-gray-800">You have finished the video. Your vocabulary words and their meanings have been extracted and stored in the database.</div>
+        <div className="w-full h-96 bg-gray-50 rounded-lg shadow-lg p-6 space-y-4">
+            <div className="text-2xl font-bold text-gray-800 mb-4">Vocabulary
+            </div>
+            <table className="w-full">
+                <thead>
+                    <tr>
+                        <th className="text-left">Word</th>
+                        <th className="text-left">Definition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        
+                        VocabData.data.
+                             map((vocab, index) => (
+                            Object.keys(vocab).map((word, index) => (
+
+                                <tr key={index}>
+                                    <td>{word}</td>
+                                    <td>{vocab[word]}</td>
+                                </tr>
+                            ))
+                        ))
+                            
+                        
+                    }
+                </tbody>
+            </table>
         </div>
     );
+
 };
 
 
