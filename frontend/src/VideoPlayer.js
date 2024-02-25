@@ -141,9 +141,11 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         //get extract vocab
         }
         //if stopped, then getSet
-        if (seconds > 10) {
-            getSet();
-        }
+
+        // `console.log(state);`
+        // if (state === states.STOPPED) {
+        //     getSet();
+        // }
     }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, currSubtitles]);
 
     useEffect(() => {
@@ -220,18 +222,28 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
     }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, currSubtitles]);
 
+    useEffect(() => {
+        console.log(state);
+    }, [state]);
 
     return (
         <div className="pt-24 space-y-4">
             <div className="w-full flex justify-center items-center">
+                {
+                (state !== states.STOPPED   )
+                ?
                 <ReactPlayer
                     className="react-player"
                     url={videoUrl}
                     controls={true}
                     onProgress={(s) => setSeconds(s.playedSeconds)}
                     playing={state === states.PLAYING}
+                    onEnded={() => setState(states.STOPPED)}
                     onDuration={(duration) => duration && setDuration(duration)}
                 />
+                :
+                <Dictionary />
+                }
             </div>
             <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
                 <div className="text-green-600">Correct: {statistic.numCorrect}</div>
@@ -254,6 +266,18 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     
     
 };
+
+const Dictionary = () => {
+    
+
+
+    return (
+        <div className="w-full h-96 flex justify-center items-center bg-gray-50 rounded-lg shadow-lg p-6 space-y-4">
+            <div className="text-xl font-bold text-gray-800">You have finished the video. Your vocabulary words and their meanings have been extracted and stored in the database.</div>
+        </div>
+    );
+};
+
 
 const GeneratedWriting = (props) => {
     const { statistic, setStatistic, setState } = props;
