@@ -90,10 +90,10 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     useEffect(() => {
         const getQuestion = async () => {
             try {
-                // const response = await fetch(
-                //     `${url}/generate-question?timestamp=${seconds}&videoDetails=${videoDetails}`
-                // );
-                const response = fakeGenerateQuestion();
+                
+                const response = await fetch(
+                    '/generate-question'
+                    );
                 const data = await response.json();
                 setGeneration(
                     {
