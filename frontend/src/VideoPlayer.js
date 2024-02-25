@@ -59,6 +59,8 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
     const pauseTimeRef = useRef(config.questionDelay);
 
+    let runningSubtitles = useRef([]);
+
 
     // fetch subtitles
     useEffect(() => {
@@ -94,16 +96,17 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 const response = await fetch(
                     `${url}/generate-question`,
                     {
-                        method: 'POST',
+                        method: 'GET',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            sourceLanguage,
+                        params: {
+                            title: videoDetails.title,
+                            description: videoDetails.description,
+                            subtitles: runningSubtitles.current.join('\n'),
                             targetLanguage,
-                            videoDetails,
-                            seconds
-                        })
+                            sourceLanguage
+                        }
                     }
                 );
                 // const response = fakeGenerateQuestion();
@@ -121,13 +124,21 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
         }
 
         const roundedSeconds = Math.round(seconds);
+        runningSubtitles.current = [];
+        for (let i = 0; i < videoDetails.subtitles?.length; i++) {
+            if (seconds > parseFloat(videoDetails.subtitles[i].start) + parseFloat(videoDetails.subtitles[i].dur)) {
+                runningSubtitles.current.push(videoDetails.subtitles[i].text);
+            } else {
+                break;
+            }
+        }
         if (roundedSeconds >= pauseTimeRef.current) {
             pauseTimeRef.current += config.questionDelay;
             setState(states.PAUSED);
             getQuestion();
         }
 
-    }, [seconds, config]);
+    }, [seconds, config, videoDetails, sourceLanguage, targetLanguage, runningSubtitles]);
 
     useEffect(() => {
         console.log(videoDetails);

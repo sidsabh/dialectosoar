@@ -9,10 +9,6 @@ app.use(cors());
 //lets now do something for open ai api:
 const axios = require('axios');
 
-//TODO: encrypt this
-const openAiKey = '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';
-
-
 
 
 app.get("/video-data", async (req, res) => {
@@ -27,45 +23,32 @@ app.get("/video-data", async (req, res) => {
 });
 
 
-app.post('/generate-question', async (req, res) => {
+app.get('/generate-question', async (req, res) => {
   try {
-    const videoDetails = req.body.videoDetails;
-    const videoTranscript = videoDetails.subtitles.map(subtitle => subtitle.text);
-    const combinedText = videoTranscript.join(' ');
-    const seconds = req.body.seconds;
-
+    const title = req.body.title;
+    const description = req.body.description;
+    const subtitles = req.body.subtitles;
     const targetLanguage = req.body.targetLanguage;
     const sourceLanguage = req.body.sourceLanguage;
-    // Generate a prompt for GPT-3
-    const prompt = `Create a comprehension multiple choice question in ${targetLanguage} about this ${sourceLanguage} the video titled ${videoDetails.title} with description ${videoDetails.description}. We want the question to only cover content up to ${seconds}. Put the correct answer after.:\n\n${combinedText}`;
+    
+    // PROMPT
+    const prompt = `Create a multiple choice question for comprehension in ${targetLanguage} about this ${sourceLanguage} video titled ${title} with description ${description}. Label your lines as follows. "QUESTION: <question>", "ANSWER_CHOICE": <answer_choice>", and "CORRECT_ANSWER": <correct_answer>. For example, if you had one question and four answer choices, you would print those five lines then one more line for the correct answer. Here is 
+    the subtitles for the video:\n\n${subtitles}.`;
 
-    const response = await axios.post(
-      'https://api.openai.com/v1/engines/davinci-codex/completions',
-      {
-        prompt: prompt,
-        max_tokens: 150, // Adjust as needed
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openAiKey}`,
-        },
-      }
-    );
+    // print everything
+    console.log('title:', title);
+    console.log('description:', description);
+    console.log('subtitles:', subtitles);
+    console.log('targetLanguage:', targetLanguage);
+    console.log('sourceLanguage:', sourceLanguage);
+    console.log('prompt:', prompt);
 
+    // return 200
+    res.status(200).json({ question: 'What is the capital of France?', answers: ['Paris', 'London', 'New York', 'Berlin'], correctAnswerIndex: 0 });
 
-    //ok from the question, we need to extract the question and the answer choices.
-    //the answer choices will be individual lines starting with A), B), C) and D).
-    //so extract it via the first occurences of those:
-    const generatedQuestion = response.data.choices[0].text;
-    const answerChoices = generatedQuestion.match(/A\).+|B\).+|C\).+|D\).+/g);
-
-    console.log(answerChoices);
-
-    res.json({ question: generatedQuestion, answers: answerChoices });
   } catch (error) {
-    console.error('Error making request to OpenAI API:', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('ERROR making request to OpenAI API:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
