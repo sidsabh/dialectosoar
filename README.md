@@ -22,7 +22,7 @@ Watch your language skills soar through the language learning tool that prompts 
 4] OpenAI APIs (Question Generation)
 
 ## Credits
-Sid Sabhnani: [GitHub]((https://github.com/sidsabh))
+Sid Sabhnani: [GitHub]([https://github.com/sidsabh])
 
 Zayaan Rahman: [GitHub]([url](https://github.com/grizzledwarvet23))
 
