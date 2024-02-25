@@ -5,7 +5,7 @@
 
 An app that helps people learn new languages through watching videos with integrated language understanding and comprehension checks
 
-Watch your language skills soar through the language learning tool that prompts questions based on a YouTube video in any foreign language! Dialectosaur is a webapp that analyzes a video in a foreign language, periodically stopping the video to ask the user a question about the video's content since the last question. In doing so, our app constantly makes sure that user's are staying on top of their language learning while engaging with videos they find interesting!
+Watch your language skills soar through the language learning tool that prompts questions based on a YouTube video in any foreign language! Dialectosoar is a webapp that analyzes a video in a foreign language, periodically stopping the video to ask the user a question about the video's content since the last question. In doing so, our app constantly makes sure that user's are staying on top of their language learning while engaging with videos they find interesting!
 
 ## Features
 1] We offer a variety of question styles to enable learning different specific things, like comprehension questions, multiple choice questions, and writing practice questions
