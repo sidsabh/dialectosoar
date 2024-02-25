@@ -172,7 +172,6 @@ app.post('/check-writing', async (req, res) => {
   }
 });
 
-  
 app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
 });

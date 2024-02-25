@@ -101,6 +101,7 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
     useEffect(() => {
         const fetchSubtitles = async () => {
             try {
+                console.log(videoUrl.split('v=')[1]);
                 const response = await fetch(
                     // `${url}/video-data?videoID=${videoUrl.split('v=')[1]}&lang=${sourceLanguage}`
                     `${url}/video-data?videoID=${videoUrl.split('v=')[1]}`
