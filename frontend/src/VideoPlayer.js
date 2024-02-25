@@ -238,9 +238,44 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
 
     return (
         <div className="pt-24 space-y-4">
+            {(state !== states.STOPPED )
+            ?
+            <div>
             <div className="w-full flex justify-center items-center">
+                <ReactPlayer
+                        className="react-player"
+                        url={videoUrl}
+                        controls={true}
+                        onProgress={(s) => setSeconds(s.playedSeconds)}
+                        playing={state === states.PLAYING}
+                        onEnded={() => setState(states.STOPPED)}
+                        onDuration={(duration) => duration && setDuration(duration)}
+                />
+            </div>
+            <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
+                <div className="text-green-600">Correct: {statistic.numCorrect}</div>
+                <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
+                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
+            </div>
+            </div>
+            :
+            <div>
+            <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
+                <div className="text-green-600">Correct: {statistic.numCorrect}</div>
+                <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
+                <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
+            </div>
+            <Dictionary />
+            </div>
+
+            }
+
+
+
+
+            {/* <div className="w-full flex justify-center items-center">
                 {
-                (state !== states.STOPPED   )
+                (state !== states.STOPPED )
                 ?
                 <ReactPlayer
                     className="react-player"
@@ -253,13 +288,14 @@ const VideoPlayer = ({ videoUrl, sourceLanguage, targetLanguage }) => {
                 />
                 :
                 <Dictionary />
+                
                 }
             </div>
             <div className="flex justify-around border border-gray-200 rounded-lg p-2 shadow w-1/2 mx-auto">
                 <div className="text-green-600">Correct: {statistic.numCorrect}</div>
                 <div className="text-red-600">Incorrect: {statistic.numIncorrect}</div>
                 <div className="text-gray-600">Skipped: {statistic.numSkipped}</div>
-            </div>
+            </div> */}
             <div className={`w-1/2 mx-auto ${(state === states.MCQ || state === states.WRITING) ? 'visible' : 'invisible'}`}>
                 {
                     state === states.MCQ ? 
